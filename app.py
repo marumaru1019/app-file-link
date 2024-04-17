@@ -1,22 +1,24 @@
-import streamlit as st
+from flask import Flask, jsonify
 from azure.storage.fileshare import ShareServiceClient
 import os
 from dotenv import load_dotenv
 
+app = Flask(__name__)
 
 load_dotenv()
-st.title("Azure Files Explorer")
 
-connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-share_name = os.getenv("AZURE_STORAGE_SHARE_NAME")
-
+@app.route('/')
 def list_files():
+    connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    share_name = os.getenv("AZURE_STORAGE_SHARE_NAME")
+    
     share_service_client = ShareServiceClient.from_connection_string(connect_str)
     share_client = share_service_client.get_share_client(share_name)
     files = share_client.list_directories_and_files()
-    return [file_or_dir.name for file_or_dir in files]
+    
+    files_list = [file_or_dir.name for file_or_dir in files]
+    
+    return jsonify(files_list)
 
-files_list = list_files()
-st.write("Files in Azure Files:")
-for file in files_list:
-    st.write(file)
+if __name__ == '__main__':
+    app.run(debug=True)
